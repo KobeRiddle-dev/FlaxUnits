@@ -7,6 +7,8 @@ using Mathr = FlaxEngine.Mathf;
 #endif
 
 using System;
+using FlaxEngine;
+using System.Reflection;
 
 namespace Units;
 
@@ -15,22 +17,29 @@ namespace Units;
 /// </summary>
 public struct Force
 {
-    /// <summary>The Mass component of the Force</summary>
-    public Mass Mass { get; set; }
-
-    /// <summary>The Acceleration component of the Force</summary>
-    public Acceleration Acceleration { get; set; }
+    private readonly float newtons;
 
     /// <summary>
     /// Creates a Force.
-    /// <br/> This is only meant to be used in this class and by Mass's (Mass * Acceleration) operator.
+    /// <br/> This is only meant to be used in this struct and by Mass's (Mass * Acceleration) operator.
     /// </summary>
     /// <param name="mass"></param>
     /// <param name="acceleration"></param>
     internal Force(Mass mass, Acceleration acceleration)
     {
-        this.Mass = mass;
-        this.Acceleration = acceleration;
+        this.newtons = mass.Kilograms * (float)(acceleration.Distance.Meters / acceleration.TimeSquared.TotalSeconds);
+    }
+
+    private Force(float newtons)
+    {
+        this.newtons = newtons;
+    }
+
+    /// <param name="newtons"></param>
+    /// <returns>A force</returns>
+    public static Force FromNewtons(float newtons)
+    {
+        return new Force(newtons);
     }
 
     /// <summary>
@@ -39,7 +48,41 @@ public struct Force
     /// </summary>
     public readonly Real Newtons
     {
-        get { return Mass.Kilograms * Acceleration.Distance.Meters * Acceleration.TimeSquared.Seconds; }
+        get { return this.newtons; }
+    }
+
+    /// <param name="left"></param>
+    /// <param name="right"></param>
+    /// <returns>A Force representing the sum of left and right</returns>
+    public static Force operator +(Force left, Force right)
+    {
+        return Force.FromNewtons(left.newtons + right.newtons);
+    }
+
+    /// <param name="left"></param>
+    /// <param name="right"></param>
+    /// <returns>A Force representing the result of the right Force subtracted from the left</returns>
+    public static Force operator -(Force left, Force right)
+    {
+        return Force.FromNewtons(left.newtons - right.newtons);
+    }
+
+    /// <param name="force"></param>
+    /// <param name="mass"></param>
+    /// <returns>An acceleration representing force / mass</returns>
+    public static Acceleration operator /(Force force, Mass mass)
+    {
+        Real metersPerSecondSquared = force.newtons / mass.Kilograms;
+        return Distance.FromMeters(metersPerSecondSquared) / TimeSpan.FromSeconds(1) / TimeSpan.FromSeconds(1);
+    }
+
+    /// <param name="force"></param>
+    /// <param name="acceleration"></param>
+    /// <returns>A mass representing force / acceleration</returns>
+    public static Mass operator /(Force force, Acceleration acceleration)
+    {
+        float kilograms = (float)(force.newtons / acceleration.Distance.Meters / acceleration.TimeSquared.TotalSeconds);
+        return Mass.FromKilograms(kilograms);
     }
 
     /// <inheritdoc/>
@@ -51,13 +94,15 @@ public struct Force
         }
 
         Force other = (Force)obj;
-        return this.Mass.Equals(other.Mass) && this.Acceleration.Equals(other.Acceleration);
+        float allowableDifference = 0.00001f;
+
+        return Mathf.Abs(this.newtons - other.newtons) <= allowableDifference;
     }
 
     /// <inheritdoc/>
     public override readonly int GetHashCode()
     {
-        return this.Mass.GetHashCode() + this.Acceleration.GetHashCode();
+        return this.newtons.GetHashCode();
     }
 
     /// <summary>Equivalent to left.Equals(right)</summary>
