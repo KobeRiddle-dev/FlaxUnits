@@ -34,6 +34,16 @@ public struct Acceleration
         this.Time = time;
     }
 
+    // TODO: should this instead just take in the unsquared time?
+    /// <param name="distance"></param>
+    /// <param name="timeSquared"></param>
+    /// <returns>An Acceleration representing distance over timeSquared</returns>
+    public static Acceleration FromDistanceAndTimeSquared(Distance distance, TimeSpan timeSquared)
+    {
+        TimeSpan time = TimeSpan.FromSeconds(Mathd.Sqrt(timeSquared.TotalSeconds));
+        return (distance / time) / time;
+    }
+
     /// <summary>
     /// The numerator, Distance, of the standard representation of Acceleration, Distance / Time².
     /// <br/>Equivalent to Acceleration.Velocity.Distance
@@ -50,6 +60,14 @@ public struct Acceleration
     public readonly TimeSpan TimeSquared
     {
         get { return TimeSpan.FromSeconds(this.Velocity.Time.TotalSeconds * this.Time.TotalSeconds); }
+    }
+
+    public static Acceleration operator +(Acceleration left, Acceleration right)
+    {
+        Real leftMetersPerSecondSquared = left.Distance.Meters / (Real)left.TimeSquared.TotalSeconds;
+        Real rightMetersPerSecondSquared = right.Distance.Meters / (Real)right.TimeSquared.TotalSeconds;
+
+        return Acceleration.FromDistanceAndTimeSquared(Distance.FromMeters(leftMetersPerSecondSquared + rightMetersPerSecondSquared), TimeSpan.FromSeconds(1));
     }
 
     /// <param name="acceleration"></param>
