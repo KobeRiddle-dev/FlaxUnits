@@ -4,18 +4,20 @@ using Mathr = FlaxEngine.Mathd;
 #else
 using Real = System.Single;
 using Mathr = FlaxEngine.Mathf;
-using System;
 #endif
+
+using System;
 
 namespace Units;
 
 /// <summary>
-/// Represents a space interval
+/// Represents a distance
 /// </summary>
 public struct Distance
 {
     private const Real metersPerKilometer = 1000;
     private const Real centimetersPerMeter = 1000;
+    private const Real millimetersPerCentimeter = 10;
 
     private readonly Real centimeters;
 
@@ -27,6 +29,9 @@ public struct Distance
 
     /// <summary>The Distance in centimeters</summary>
     public readonly Real Centimeters => this.centimeters;
+
+    /// <summary>The Distance in millimeters</summary>
+    public readonly Real Millimeters => this.centimeters * millimetersPerCentimeter;
 
     private Distance(Real centimeters)
     {
@@ -94,6 +99,14 @@ public struct Distance
         return new Distance(-distance.centimeters);
     }
 
+    /// <param name="distance"></param>
+    /// <param name="time"></param>
+    /// <returns>A Velocity representing a change in distance over the specified time</returns>
+    public static Velocity operator /(Distance distance, TimeSpan time)
+    {
+        return new Velocity(distance, time);
+    }
+
     /// <inheritdoc/>
     public override readonly bool Equals(object obj)
     {
@@ -102,7 +115,9 @@ public struct Distance
             return false;
         }
 
-        return this.centimeters.Equals(((Distance)obj).centimeters);
+        Distance other = (Distance)obj;
+        Real allowableDifference = (Real)0.00001;
+        return Mathr.Abs(this.centimeters - other.centimeters) <= allowableDifference;
     }
 
     /// <inheritdoc/>
@@ -128,11 +143,5 @@ public struct Distance
         return !left.Equals(right);
     }
 
-    /// <param name="distance"></param>
-    /// <param name="time"></param>
-    /// <returns>A Velocity representing the distance over the specified time</returns>
-    public static Velocity operator /(Distance distance, TimeSpan time)
-    {
-        return new Velocity(distance, time);
-    }
+    
 }
