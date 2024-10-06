@@ -62,6 +62,9 @@ public struct Acceleration
         get { return TimeSpan.FromSeconds(this.Velocity.Time.TotalSeconds * this.Time.TotalSeconds); }
     }
 
+    /// <param name="left"></param>
+    /// <param name="right"></param>
+    /// <returns>An acceleration representing the sum of left and right</returns>
     public static Acceleration operator +(Acceleration left, Acceleration right)
     {
         Real leftMetersPerSecondSquared = left.Distance.Meters / (Real)left.TimeSquared.TotalSeconds;
