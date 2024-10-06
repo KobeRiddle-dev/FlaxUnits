@@ -102,8 +102,8 @@ public struct Mass
         }
 
         Mass other = (Mass)obj;
-
         float allowableDifference = 0.00001f;
+
         return Mathf.Abs(this.Kilograms - other.Kilograms) <= allowableDifference;
     }
 
