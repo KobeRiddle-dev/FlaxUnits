@@ -9,17 +9,17 @@ using Mathr = FlaxEngine.Mathf;
 using System;
 using FlaxEngine;
 
-namespace Units;
+namespace Units.Vectors;
 
 /// <summary>
 /// Represents an acceleration value, a change in velocity over time.
 /// </summary>
 [Serializable]
-public struct Acceleration
+public struct Acceleration3
 {
     /// <summary>Velocity, the numerator of the Acceleration</summary>
     [Serialize]
-    public Velocity Velocity { get; set; }
+    public Velocity3 Velocity { get; set; }
 
     /// <summary>Time, the denominator of the Acceleration</summary>
     [Serialize]
@@ -31,7 +31,7 @@ public struct Acceleration
     /// </summary>
     /// <param name="velocity"></param>
     /// <param name="time"></param>
-    internal Acceleration(Velocity velocity, TimeSpan time)
+    internal Acceleration3(Velocity3 velocity, TimeSpan time)
     {
         if (time.TotalSeconds == 0)
             throw new ArgumentException("Time cannot be exactly 0");
@@ -45,23 +45,23 @@ public struct Acceleration
     /// <param name="distance"></param>
     /// <param name="timeSquared"></param>
     /// <returns>An Acceleration representing distance over timeSquared</returns>
-    public static Acceleration FromDistanceAndTimeSquared(Distance distance, TimeSpan timeSquared)
+    public static Acceleration3 FromDistanceAndTimeSquared(Distance3 distance, TimeSpan timeSquared)
     {
         TimeSpan time = TimeSpan.FromSeconds(Mathd.Sqrt(timeSquared.TotalSeconds));
         return (distance / time) / time;
     }
 
     /// <summary>
-    /// The numerator, Distance, of the standard representation of Acceleration, Distance / Time².
-    /// <br/>Equivalent to Acceleration.Velocity.Distance
+    /// The numerator, Distance, of the standard representation of Acceleration3, Distance / Time².
+    /// <br/>Equivalent to Acceleration3.Velocity.Distance
     /// </summary>
-    public readonly Distance Distance
+    public readonly Distance3 Distance
     {
         get { return this.Velocity.Distance; }
     }
 
     /// <summary>
-    /// The quotient, Time², of the standard representation of Acceleration, Distance / Time²
+    /// The quotient, Time², of the standard representation of Acceleration3, Distance / Time²
     /// <para>this.Time² is equivalent to the this.Velocity.Time * this.Time</para>
     /// </summary>
     public readonly TimeSpan TimeSquared
@@ -72,36 +72,36 @@ public struct Acceleration
     /// <param name="left"></param>
     /// <param name="right"></param>
     /// <returns>An acceleration representing the sum of left and right</returns>
-    public static Acceleration operator +(Acceleration left, Acceleration right)
+    public static Acceleration3 operator +(Acceleration3 left, Acceleration3 right)
     {
-        Real leftMetersPerSecondSquared = left.Distance.Meters / (Real)left.TimeSquared.TotalSeconds;
-        Real rightMetersPerSecondSquared = right.Distance.Meters / (Real)right.TimeSquared.TotalSeconds;
+        Vector3 leftCentiMetersPerSecondSquared = left.Distance.Centimeters / (Real)left.TimeSquared.TotalSeconds;
+        Vector3 rightCentiMetersPerSecondSquared = right.Distance.Meters / (Real)right.TimeSquared.TotalSeconds;
 
-        return Acceleration.FromDistanceAndTimeSquared(Distance.FromMeters(leftMetersPerSecondSquared + rightMetersPerSecondSquared), TimeSpan.FromSeconds(1));
+        return Distance3.FromCentimeters(leftCentiMetersPerSecondSquared + rightCentiMetersPerSecondSquared) / TimeSpan.FromSeconds(1) / TimeSpan.FromSeconds(1);
     }
 
     /// <param name="mass"></param>
     /// <param name="acceleration"></param>
     /// <returns>A force of mass * acceleration</returns>
-    public static Force operator *(Mass mass, Acceleration acceleration)
+    public static Force3 operator *(Mass mass, Acceleration3 acceleration)
     {
-        return new Force(mass, acceleration);
+        return new Force3(mass, acceleration);
     }
 
     /// <param name="mass"></param>
     /// <param name="acceleration"></param>
     /// <returns>A force of mass * acceleration</returns>
-    public static Force operator *(Acceleration acceleration, Mass mass)
+    public static Force3 operator *(Acceleration3 acceleration, Mass mass)
     {
-        return new Force(mass, acceleration);
+        return new Force3(mass, acceleration);
     }
 
     /// <param name="acceleration"></param>
     /// <param name="time"></param>
     /// <returns>A Velocity representing the total change in velocity over the TimeSpan specified</returns>
-    public static Velocity operator *(Acceleration acceleration, TimeSpan time)
+    public static Velocity3 operator *(Acceleration3 acceleration, TimeSpan time)
     {
-        return Distance.FromMeters(acceleration.Distance.Meters * (Real)time.TotalSeconds) / TimeSpan.FromSeconds(Mathd.Sqrt(acceleration.TimeSquared.TotalSeconds));
+        return Distance3.FromMeters(acceleration.Distance.Meters * (Real)time.TotalSeconds) / TimeSpan.FromSeconds(Mathd.Sqrt(acceleration.TimeSquared.TotalSeconds));
     }
 
     /// <inheritdoc/>
@@ -112,12 +112,15 @@ public struct Acceleration
             return false;
         }
 
-        Acceleration other = (Acceleration)obj;
-        Real thisCentimetersPerSecondSquared = this.Distance.Centimeters / (Real)this.TimeSquared.TotalSeconds;
-        Real otherCentimetersPerSecondSquared = other.Distance.Centimeters / (Real)other.TimeSquared.TotalSeconds;
+        Acceleration3 other = (Acceleration3)obj;
+        Vector3 thisCentimetersPerSecondSquared = this.Distance.Centimeters / (Real)this.TimeSquared.TotalSeconds;
+        Vector3 otherCentimetersPerSecondSquared = other.Distance.Centimeters / (Real)other.TimeSquared.TotalSeconds;
 
         Real allowableDifference = (Real)0.00001;
-        return Mathr.Abs(thisCentimetersPerSecondSquared - otherCentimetersPerSecondSquared) <= allowableDifference;
+        Vector3 difference = (thisCentimetersPerSecondSquared - otherCentimetersPerSecondSquared).Absolute;
+        return difference.X <= allowableDifference
+            && difference.Y <= allowableDifference
+            && difference.Z <= allowableDifference;
     }
 
     /// <inheritdoc/>
@@ -130,7 +133,7 @@ public struct Acceleration
     /// <param name="left"></param>
     /// <param name="right"></param>
     /// <returns>True if left and right are both Velocities and are equal, false otherwise</returns>
-    public static bool operator ==(Acceleration left, Acceleration right)
+    public static bool operator ==(Acceleration3 left, Acceleration3 right)
     {
         return left.Equals(right);
     }
@@ -138,7 +141,7 @@ public struct Acceleration
     /// <param name="left"></param>
     /// <param name="right"></param>
     /// <returns>False if left == right, true otherwise</returns>
-    public static bool operator !=(Acceleration left, Acceleration right)
+    public static bool operator !=(Acceleration3 left, Acceleration3 right)
     {
         return !left.Equals(right);
     }

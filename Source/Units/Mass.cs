@@ -6,10 +6,12 @@ namespace Units;
 /// <summary>
 /// Represents a mass.
 /// </summary>
+[Serializable]
 public struct Mass
 {
     private const float GRAMS_PER_KILOGRAM = 1000;
 
+    [Serialize]
     private readonly float kilograms;
 
     internal Mass(float kilograms)
@@ -74,22 +76,6 @@ public struct Mass
     public static Mass operator -(Mass mass)
     {
         return Mass.FromKilograms(-mass.kilograms);
-    }
-
-    /// <param name="mass"></param>
-    /// <param name="acceleration"></param>
-    /// <returns>A force of mass * acceleration</returns>
-    public static Force operator *(Mass mass, Acceleration acceleration)
-    {
-        return new Force(mass, acceleration);
-    }
-
-    /// <param name="mass"></param>
-    /// <param name="acceleration"></param>
-    /// <returns>A force of mass * acceleration</returns>
-    public static Force operator *(Acceleration acceleration, Mass mass)
-    {
-        return new Force(mass, acceleration);
     }
 
     /// <param name="obj"></param>

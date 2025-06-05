@@ -8,23 +8,24 @@ using Mathr = FlaxEngine.Mathf;
 
 using System;
 using FlaxEngine;
+using FlaxEngine.Utilities;
 
-namespace Units;
+namespace Units.Vectors;
 
 /// <summary>
 /// Represents a velocity, a change in distance over time.
 /// </summary>
 [Serializable]
-public struct Velocity
+public struct Velocity3
 {
 
     /// <summary>Distance, the numerator of the Velocity</summary>
     [Serialize]
-    public Distance Distance { get; set; }
+    public Distance3 Distance { get; set; }
 
     /// <summary>Time, the denominator of the Velocity</summary>
     [Serialize]
-    public TimeSpan Time { get; set; }
+    public TimeSpan Time { get; set; } = TimeSpan.FromSeconds(1);
 
     /// <summary>
     /// Creates a Velocity representing the distance over the specified TimeSpan. 
@@ -32,7 +33,7 @@ public struct Velocity
     /// </summary>
     /// <param name="distance"></param>
     /// <param name="time"></param>
-    internal Velocity(Distance distance, TimeSpan time)
+    internal Velocity3(Distance3 distance, TimeSpan time)
     {
         if (time.TotalSeconds == 0)
             throw new ArgumentException("Time cannot be exactly 0");
@@ -44,45 +45,45 @@ public struct Velocity
     /// <param name="left"></param>
     /// <param name="right"></param>
     /// <returns>A Velocity representing the sum of the two Velocities</returns>
-    public static Velocity operator +(Velocity left, Velocity right)
+    public static Velocity3 operator +(Velocity3 left, Velocity3 right)
     {
-        Real centimetersPerSecond = left.Distance.Centimeters / (Real)left.Time.TotalSeconds
+        Vector3 centimetersPerSecond = left.Distance.Centimeters / (Real)left.Time.TotalSeconds
                             + right.Distance.Centimeters / (Real)right.Time.TotalSeconds;
 
-        return new Velocity(Distance.FromCentimeters(centimetersPerSecond), TimeSpan.FromSeconds(1));
+        return new Velocity3(Distance3.FromCentimeters(centimetersPerSecond), TimeSpan.FromSeconds(1));
     }
 
     /// <param name="left"></param>
     /// <param name="right"></param>
     /// <returns>A Velocity representing the sum of the two Velocities</returns>
-    public static Velocity operator -(Velocity left, Velocity right)
+    public static Velocity3 operator -(Velocity3 left, Velocity3 right)
     {
         return left + (-right);
     }
 
     /// <param name="velocity"></param>
     /// <returns>A Velocity representing the negation of velocity</returns>
-    public static Velocity operator -(Velocity velocity)
+    public static Velocity3 operator -(Velocity3 velocity)
     {
-        return new Velocity(-velocity.Distance, velocity.Time);
+        return new Velocity3(-velocity.Distance, velocity.Time);
     }
 
     /// <param name="velocity"></param>
     /// <param name="time"></param>
     /// <returns>An Acceleration representing a change in Velocity over the time specified</returns>
-    public static Acceleration operator /(Velocity velocity, TimeSpan time)
+    public static Acceleration3 operator /(Velocity3 velocity, TimeSpan time)
     {
-        return new Acceleration(velocity, time);
+        return new Acceleration3(velocity, time);
     }
 
     /// <param name="left"></param>
     /// <param name="right"></param>
     /// <returns>A Distance representing the total change in distance by this Velocity over the time specified</returns>
-    public static Distance operator *(Velocity left, TimeSpan right)
+    public static Distance3 operator *(Velocity3 left, TimeSpan right)
     {
-        Real metersPerSecond = left.Distance.Meters / (Real)left.Time.TotalSeconds;
-        Real meters = metersPerSecond * (Real)right.TotalSeconds;
-        return Distance.FromMeters(meters);
+        Vector3 metersPerSecond = left.Distance.Meters / (Real)left.Time.TotalSeconds;
+        Vector3 meters = metersPerSecond * (Real)right.TotalSeconds;
+        return Distance3.FromMeters(meters);
     }
 
     /// <inheritdoc/>
@@ -93,12 +94,15 @@ public struct Velocity
             return false;
         }
 
-        Velocity other = (Velocity)obj;
-        Real thisCentimetersPerSecond = this.Distance.Centimeters / (Real)this.Time.TotalSeconds;
-        Real otherCentimetersPerSecond = other.Distance.Centimeters / (Real)other.Time.TotalSeconds;
+        Velocity3 other = (Velocity3)obj;
+        Vector3 thisCentimetersPerSecond = this.Distance.Centimeters / (Real)this.Time.TotalSeconds;
+        Vector3 otherCentimetersPerSecond = other.Distance.Centimeters / (Real)other.Time.TotalSeconds;
 
         Real allowableDifference = (Real)0.00001;
-        return Mathr.Abs(thisCentimetersPerSecond - otherCentimetersPerSecond) <= allowableDifference;
+        Vector3 difference = (thisCentimetersPerSecond - otherCentimetersPerSecond).Absolute;
+        return difference.X <= allowableDifference 
+            && difference.Y <= allowableDifference 
+            && difference.Z <= allowableDifference;
     }
 
     /// <inheritdoc/>
@@ -111,7 +115,7 @@ public struct Velocity
     /// <param name="left"></param>
     /// <param name="right"></param>
     /// <returns>True if left and right are both Velocities and are equal, false otherwise</returns>
-    public static bool operator ==(Velocity left, Velocity right)
+    public static bool operator ==(Velocity3 left, Velocity3 right)
     {
         return left.Equals(right);
     }
@@ -119,7 +123,7 @@ public struct Velocity
     /// <param name="left"></param>
     /// <param name="right"></param>
     /// <returns>False if left == right, true otherwise</returns>
-    public static bool operator !=(Velocity left, Velocity right)
+    public static bool operator !=(Velocity3 left, Velocity3 right)
     {
         return !left.Equals(right);
     }
